@@ -83,14 +83,9 @@ EkkoLightbox.prototype = {
 
 				# add the directional arrows to the modal
 				if @options.directional_arrows && @gallery_items.length > 1
-					@lightbox_container.append('<div class="ekko-lightbox-nav-overlay"><a href="#" class="'+@strip_stops(@options.left_arrow_class)+'"></a><a href="#" class="'+@strip_stops(@options.right_arrow_class)+'"></a></div>')
+					@lightbox_container.append('<div class="ekko-lightbox-nav-overlay"></div>')
 					@modal_arrows = @lightbox_container.find('div.ekko-lightbox-nav-overlay').first()
-					@lightbox_container.find('a'+@strip_spaces(@options.left_arrow_class)).on 'click', (event) =>
-						event.preventDefault()
-						do @navigate_left
-					@lightbox_container.find('a'+@strip_spaces(@options.right_arrow_class)).on 'click', (event) =>
-						event.preventDefault()
-						do @navigate_right
+					@add_nav_arrows()
 
 			if @options.type
 				if @options.type == 'image'
@@ -110,7 +105,24 @@ EkkoLightbox.prototype = {
 
 			else
 				@detectRemoteType(@options.remote)
+				
+	add_nav_arrows: () ->
+		@modal_arrows.append('<a href="#" class="'+@strip_stops(@options.left_arrow_class)+'"></a><a href="#" class="'+@strip_stops(@options.right_arrow_class)+'"></a>');
+		@modal_arrows.find('a').css 'line-height', ->
+			$(@).parent().height() + 'px'
+		@		
+		@lightbox_container.find('a'+@strip_spaces(@options.left_arrow_class)).on 'click', (event) =>
+			event.preventDefault()
+			do @navigate_left
+		@lightbox_container.find('a'+@strip_spaces(@options.right_arrow_class)).on 'click', (event) =>
+			event.preventDefault()
+			do @navigate_right
+	
 
+	toggle_nav_arrows: () ->
+		@modal_arrows.find('a').remove()
+		setTimeout (=> @add_nav_arrows()), 0
+				
 	strip_stops: (str) ->
 		str.replace(/\./g, '')
 
@@ -161,6 +173,8 @@ EkkoLightbox.prototype = {
 			src = next.attr('data-remote') || next.attr('href')
 			if next.attr('data-type') == 'image' || @isImage(src)
 				@preloadImage(src, false)
+				
+		setTimeout (=> @toggle_nav_arrows()), 500		
 
 
 	navigate_left: ->
@@ -286,6 +300,9 @@ EkkoLightbox.prototype = {
 				image.addClass('img-responsive')
 				@lightbox_body.html image
 				@modal_arrows.css 'display', 'block' if @modal_arrows
+				@modal_arrows.find('a').css 'line-height', ->
+					$(@).parent().height() + 'px'
+				@		
 				@resize img.width
 				@options.onContentLoaded.call(@)
 			img.onerror = =>
@@ -297,11 +314,7 @@ EkkoLightbox.prototype = {
 	resize : ( width ) ->
 		#resize the dialog based on the width given, and adjust the directional arrow padding
 		width_total = width + @border.left + @padding.left + @padding.right + @border.right
-		@modal_dialog.css('width', 'auto') .css('max-width', width_total);
-
-		@lightbox_container.find('a').css 'line-height', ->
-			$(@).parent().height() + 'px'
-		@
+		@modal_dialog.css('width', 'auto') .css('max-width', width_total);		
 
 	checkDimensions: (width) ->
 		#check that the width given can be displayed, if not return the maximum size that can be

@@ -61,8 +61,7 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
 
   EkkoLightbox.prototype = {
     modal_shown: function() {
-      var video_id,
-        _this = this;
+      var video_id;
       if (!this.options.remote) {
         return this.error('No remote target given');
       } else {
@@ -76,16 +75,9 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
           this.gallery_index = this.gallery_items.index(this.$element);
           $(document).on('keydown.ekkoLightbox', this.navigate.bind(this));
           if (this.options.directional_arrows && this.gallery_items.length > 1) {
-            this.lightbox_container.append('<div class="ekko-lightbox-nav-overlay"><a href="#" class="' + this.strip_stops(this.options.left_arrow_class) + '"></a><a href="#" class="' + this.strip_stops(this.options.right_arrow_class) + '"></a></div>');
+            this.lightbox_container.append('<div class="ekko-lightbox-nav-overlay"></div>');
             this.modal_arrows = this.lightbox_container.find('div.ekko-lightbox-nav-overlay').first();
-            this.lightbox_container.find('a' + this.strip_spaces(this.options.left_arrow_class)).on('click', function(event) {
-              event.preventDefault();
-              return _this.navigate_left();
-            });
-            this.lightbox_container.find('a' + this.strip_spaces(this.options.right_arrow_class)).on('click', function(event) {
-              event.preventDefault();
-              return _this.navigate_right();
-            });
+            this.add_nav_arrows();
           }
         }
         if (this.options.type) {
@@ -108,6 +100,29 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
           return this.detectRemoteType(this.options.remote);
         }
       }
+    },
+    add_nav_arrows: function() {
+      var _this = this;
+      this.modal_arrows.append('<a href="#" class="' + this.strip_stops(this.options.left_arrow_class) + '"></a><a href="#" class="' + this.strip_stops(this.options.right_arrow_class) + '"></a>');
+      this.modal_arrows.find('a').css('line-height', function() {
+        return $(this).parent().height() + 'px';
+      });
+      this;
+      this.lightbox_container.find('a' + this.strip_spaces(this.options.left_arrow_class)).on('click', function(event) {
+        event.preventDefault();
+        return _this.navigate_left();
+      });
+      return this.lightbox_container.find('a' + this.strip_spaces(this.options.right_arrow_class)).on('click', function(event) {
+        event.preventDefault();
+        return _this.navigate_right();
+      });
+    },
+    toggle_nav_arrows: function() {
+      var _this = this;
+      this.modal_arrows.find('a').remove();
+      return setTimeout((function() {
+        return _this.add_nav_arrows();
+      }), 0);
     },
     strip_stops: function(str) {
       return str.replace(/\./g, '');
@@ -155,7 +170,8 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
       }
     },
     navigateTo: function(index) {
-      var next, src;
+      var next, src,
+        _this = this;
       if (index < 0 || index > this.gallery_items.length - 1) {
         return this;
       }
@@ -169,9 +185,12 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
         next = $(this.gallery_items.get(this.gallery_index + 1), false);
         src = next.attr('data-remote') || next.attr('href');
         if (next.attr('data-type') === 'image' || this.isImage(src)) {
-          return this.preloadImage(src, false);
+          this.preloadImage(src, false);
         }
       }
+      return setTimeout((function() {
+        return _this.toggle_nav_arrows();
+      }), 500);
     },
     navigate_left: function() {
       if (this.gallery_items.length === 1) {
@@ -326,6 +345,10 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
           if (_this.modal_arrows) {
             _this.modal_arrows.css('display', 'block');
           }
+          _this.modal_arrows.find('a').css('line-height', function() {
+            return $(this).parent().height() + 'px';
+          });
+          _this;
           _this.resize(img.width);
           return _this.options.onContentLoaded.call(_this);
         };
@@ -339,11 +362,7 @@ License: https://github.com/ashleydw/lightbox/blob/master/LICENSE
     resize: function(width) {
       var width_total;
       width_total = width + this.border.left + this.padding.left + this.padding.right + this.border.right;
-      this.modal_dialog.css('width', 'auto').css('max-width', width_total);
-      this.lightbox_container.find('a').css('line-height', function() {
-        return $(this).parent().height() + 'px';
-      });
-      return this;
+      return this.modal_dialog.css('width', 'auto').css('max-width', width_total);
     },
     checkDimensions: function(width) {
       var body_width, width_total;
